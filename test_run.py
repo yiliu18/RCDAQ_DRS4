@@ -27,12 +27,8 @@ def start_rcdaq():
     # ROOT.gROOT.ProcessLine('ptestopen();')
     ROOT.gROOT.ProcessLine('pstart();')
 
-    peak_histogram = ROOT.gDirectory.Get('peak_histogram')
-    if not peak_histogram:
-        print('\x1b[31mError: peak_histogram not found in the current directory!\x1b[0m')
-        exit(1)
     print('done.')
-    return peak_histogram
+    return
 
 def end_rcdaq():
     print('\nStopping run and killing rcdaq server ...')
@@ -43,7 +39,16 @@ def end_rcdaq():
 
     print('Done.')
 
-peak_histogram = start_rcdaq()
+start_rcdaq()
+peak_histogram = ROOT.gDirectory.Get('peak_histogram')
+if not peak_histogram:
+    print('\x1b[31mError: peak_histogram not found in the current directory!\x1b[0m')
+    exit(1)
+
+waveform_histogram = ROOT.gDirectory.Get('waveform_histogram')
+if not waveform_histogram:
+    print('\x1b[31mError: waveform_histogram not found in the current directory!\x1b[0m')
+    exit(1)
 
 for xpos, ypos in xy_poss[:2]:
     start_time = time.time()
