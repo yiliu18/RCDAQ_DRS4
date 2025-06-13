@@ -1,0 +1,4 @@
+rcdaq_server_log_directory/
+*.so
+*.pcm
+*_dict.C

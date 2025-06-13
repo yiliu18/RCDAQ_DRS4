@@ -1,0 +1,128 @@
+Tested on Ubuntu 24.04, on June 5th 2025
+```
+
+WSL UBUNTU ROOT, DRS4EB, RCDAQ SETUP
+
+UPDIPD - allows usb devices to be used in WSL # untested as of 2025
+    winget install usbipd   
+    sudo apt install linux-tools-virtual hwdata
+    sudo update-alternatives --install /usr/local/bin/usbip usbip `ls /usr/lib/linux-tools/*/usbip | tail -n1` 20
+    restart pc
+
+ROOT - install root
+    sudo apt install binutils cmake dpkg-dev g++ gcc libssl-dev git libx11-dev libxext-dev libxft-dev libxpm-dev python3 libtbb-dev libvdt-dev libgif-dev
+    sudo apt install gfortran libpcre3-dev libglu1-mesa-dev libglew-dev libftgl-dev libfftw3-dev libcfitsio-dev libgraphviz-dev libavahi-compat-libdnssd-dev libldap2-dev python3-dev python3-numpy libxml2-dev libkrb5-dev libgsl-dev qtwebengine5-dev nlohmann-json3-dev libmysqlclient-dev libgl2ps-dev liblzma-dev libxxhash-dev liblz4-dev libzstd-dev
+
+    cd ~
+    wget https://root.cern/download/root_v6.34.08.Linux-ubuntu24.04-x86_64-gcc13.3.tar.gz
+    tar -xzf root_v6.34.08.Linux-ubuntu24.04-x86_64-gcc13.3.tar.gz
+    source ~/root/bin/thisroot.sh
+
+
+wxWidgets - required by DRS4EB
+    sudo apt-get install DRS4EB-3-dev libgl1-mesa-dev libglu1-mesa-dev libegl1-mesa-dev libgstreamer-plugins-base1.0-dev libcurl4-openssl-dev build-essential libgtk-3-dev libusb-1.0-0-dev libusb-dev
+
+    wget https://github.com/wxWidgets/wxWidgets/releases/download/v3.3.0/wxWidgets-3.3.0.tar.bz2
+    tar -xvjf wxWidgets-3.3.0.tar.bz2
+
+    mkdir buildgtk
+    cd buildgtk
+    sudo chmod a+x ../configure
+    ../configure --with-gtk
+    sudo make -j31
+    sudo make install
+    sudo ldconfig
+
+
+DRS4EB - installs drscl, drsosc, etc
+    cd ~
+    git clone https://bitbucket.org/ritt/drs4eb.git --recursive
+    cd drs4eb
+
+    cd software
+    mkdir build
+    cd build
+    cmake ..
+    make && make install # stuck on 17%? remove all drs4b files and try again, make sure you have libusb-dev, libusb-1.0-0-dev
+
+
+RCDAQ - installs daq_begin, daq_end, rcdaqopen(), etc
+    sudo apt install libtool automake rpcbind liblzo2-dev libboost-all-dev libtirpc-dev
+
+    mkdir $HOME/softwarerepo
+    cd $HOME/softwarerepo
+
+    git clone https://github.com/sPHENIX-Collaboration/rcdaq.git
+    git clone https://github.com/sPHENIX-Collaboration/online_distribution.git
+
+    export ONLINE_MAIN=$HOME/softwarerepo/install
+
+    mkdir -p build/rcdaq
+    mkdir -p build/online_distribution/{eventlibraries,pmonitor}
+
+    cd build/rcdaq
+    ../../rcdaq/autogen.sh --prefix=$ONLINE_MAIN
+    make && make install
+
+    cd ../online_distribution/eventlibraries
+    ../../../online_distribution/newbasic/autogen.sh --prefix=$ONLINE_MAIN
+    make && make install
+
+    cd ../pmonitor
+    ../../../online_distribution/pmonitor/autogen.sh --prefix=$ONLINE_MAIN
+    make && make install
+
+
+DRS COMPONENT    
+    cd $HOME/softwarerepo
+    git clone https://github.com/sPHENIX-Collaboration/drs4.git
+
+    cd drs4
+    ./autogen.sh --prefix=$HOME/softwarerepo/install
+    make && make install
+
+
+FIRST TIME SETUP
+    ADD TO ~/.bashrc
+        PATH=$PATH:~/drs4eb/software/bin
+        export ONLINE_MAIN=$HOME/softwarerepo/install
+        PATH=$PATH:$ONLINE_MAIN/bin
+        export LD_LIBRARY_PATH=$ONLINE_MAIN/lib
+        source $ONLINE_MAIN/bin/aliases.sh
+        export ROOT_INCLUDE_PATH=$ROOT_INCLUDE_PATH:$ONLINE_MAIN/include:$ONLINE_MAIN/include/Event:$ONLINE_MAIN/include/pmonitor
+        source ~/root/bin/thisroot.sh
+
+    MAKEFILE for building so file containing pinit() and process_event()
+        -I$(ONLINE_MAIN)/include/Event for both CXXFLAGS and RCFLAGS
+        -I$(ONLINE_MAIN)/include/pmonitor for both CXXFLAGS and RCFLAGS
+
+    takeUniDataV4.cc - add include
+        #include <pmonitor.h>
+
+    chmod 744 drs_setup.sh
+
+CHECKS
+    check drscl, drsosc, ./drs_setup.sh, make
+
+USAGE
+    usbipd list
+    usbipd bind --busid 3-2
+    usbipd attach --wsl --busid 3-2
+    sudo rpcbind # may not work?
+    sudo chmod -R 777 /dev/bus/usb/
+    make
+        making requires sourceing thisroot.sh again, fixed with sourcing in profile.
+
+    drscl error -6: drscl before source drs_setup.sh
+
+    make sure you change drs_setup.sh export AREA=... to a directory that exists
+
+FILES
+    Makefile
+    MyTest.cc
+    MyTest.h
+    MyTestLinkDef.h
+    MyTest_dict.C
+    MyTest_dict.h
+    drs_setup.sh
+```
