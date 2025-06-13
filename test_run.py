@@ -23,8 +23,8 @@ def start_rcdaq():
 
     ROOT.gROOT.ProcessLine(f'gSystem->Load("{shared_lib_path}");')
     ROOT.gROOT.ProcessLine('#include <pmonitor/pmonitor.h>')
-    # ROOT.gROOT.ProcessLine('rcdaqopen();')
-    ROOT.gROOT.ProcessLine('ptestopen();')
+    ROOT.gROOT.ProcessLine('rcdaqopen();')
+    # ROOT.gROOT.ProcessLine('ptestopen();')
     ROOT.gROOT.ProcessLine('pstart();')
 
     peak_histogram = ROOT.gDirectory.Get('peak_histogram')
