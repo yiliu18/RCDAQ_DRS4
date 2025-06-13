@@ -84,9 +84,9 @@ echo -en "\nServer status: "
 rcdaq_client daq_status
 
 if grep -q "Error starting server on port" "$AREA/rcdaq.log"; then
-    echo -e "\x1b[31mError: Server failed to start due to port issue. Make sure to kill rcdaq server before closing terminal.\x1b[0m"
+    echo -e "\x1b[31mError: Server failed to start due to port issue. Please run this script again.\x1b[0m"
 else
-    echo -e "\x1b[32mServer started successfully.\x1b[0m"
+    echo -e "\x1b[32mNo port issues detected.\x1b[0m"
 fi
 
 # (optional) start the run
